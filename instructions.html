@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Instructions — CAT Full Length Mock 1 | higher.study</title>
+<link rel="icon" href="assets/img/logo.svg">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/app.css">
+</head><body>
+<div id="site-header"></div>
+<main class="container"><section class="card instr" id="instr"></section></main>
+<div id="site-footer"></div>
+<script src="assets/js/config.js"></script><script src="assets/js/common.js"></script><script src="assets/js/data.js"></script><script src="assets/js/api.js"></script>
+<script>
+(function(){
+  const {$,esc}=HS,u=HS.api.me(),e=HS_DATA.exam;
+  if(!u){location.replace('index.html');return}
+  const at=HS.api.attempt(); if(at&&at.submitted){location.replace('result.html');return}
+  HS.header([['Home','index.html'],['CAT mock tests','index.html#available-tests'],[e.title]]);HS.footer();
+  HS.track('instructions_viewed');
+  $('#instr').innerHTML=`
+    <h1>${esc(e.title)}</h1><p class="sub">Hi ${esc(u.name.split(' ')[0])}, please read the instructions carefully before you begin.</p>
+    <div class="pills"><span class="pill">${e.duration} minutes</span><span class="pill">${e.totalQuestions} questions</span><span class="pill">${e.totalMarks} marks</span><span class="pill">+3 / −1 marking</span></div>
+    <table class="sec-table"><thead><tr><th>Section</th><th>Questions</th><th>Time</th><th>Marks</th></tr></thead><tbody>
+    ${e.sections.map(s=>`<tr><td><b>${s.id}</b> — ${esc(s.name)}</td><td>${s.count}</td><td>${s.minutes} min</td><td>${s.count*3}</td></tr>`).join('')}</tbody></table>
+    <h3 style="margin:22px 0 0">Instructions</h3>
+    <ol>${e.instructions.map(i=>`<li>${esc(i)}</li>`).join('')}</ol>
+    <label class="ack"><input type="checkbox" id="ack"><span>I have read all the instructions carefully and have understood them.</span></label>
+    <button class="btn btn-primary btn-lg" id="go" disabled>Start Test</button>`;
+  const ack=$('#ack'),go=$('#go');
+  ack.onchange=()=>go.disabled=!ack.checked;
+  go.onclick=async()=>{go.disabled=true;go.textContent='Starting…';go.style.opacity=.6;await HS.api.start();location.href='exam.html'};
+})();
+</script></body></html>

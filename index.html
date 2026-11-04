@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CAT Mock Tests — higher.study</title>
+<meta name="description" content="Practice with realistic CAT full-length mocks with sectional timers, instant score and detailed solutions.">
+<link rel="icon" href="assets/img/logo.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/app.css">
+</head><body>
+<div id="site-header"></div>
+<main class="container">
+  <section class="hero">
+    <h1 id="hero-h1"></h1>
+    <p id="hero-p"></p>
+    <div class="stats" id="stats"></div>
+  </section>
+
+  <section class="grid-3" style="margin-top:28px">
+    <article class="card feature"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h6M9 9h2"/></svg><h3>Real CAT interface with section timers</h3><p>Fixed VARC, then DILR, then QA order with a separate 40-minute timer per section, just like the real exam.</p></article>
+    <article class="card feature"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 9 5-9 5-9-5z"/><path d="m3 13 9 5 9-5M3 17.5 12 22l9-4.5"/></svg><h3>Instant score and section-wise analysis</h3><p>Your score out of 204 the moment you submit, with accuracy, attempts and time taken per section.</p></article>
+    <article class="card feature"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="9" r="5"/><path d="m8.5 13.5-1.5 7 5-3 5 3-1.5-7"/></svg><h3>Detailed solutions for every question</h3><p>Step-by-step explanations for every MCQ and TITA question once you finish the test.</p></article>
+  </section>
+
+  <h2 class="section" id="available-tests">Available CAT tests</h2>
+  <div class="tabs" id="tabs" role="tablist">
+    <button class="active" data-cat="full" role="tab">Full Length Mocks</button>
+    <button data-cat="sectional" role="tab">Sectional Tests</button>
+    <button data-cat="pyp" role="tab">Previous Year Papers</button>
+  </div>
+  <div class="tests" id="tests"></div>
+
+  <h2 class="plain">How it works</h2>
+  <div class="steps">
+    <div class="card"><h3>Register free</h3><p>Create your account with your name, mobile and email in under a minute.</p></div>
+    <div class="card"><h3>Take the mock</h3><p>Attempt the test in the real CAT interface with sectional timers.</p></div>
+    <div class="card"><h3>Analyse &amp; improve</h3><p>Get your score, section-wise analysis and detailed solutions instantly.</p></div>
+  </div>
+
+  <h2 class="plain">Why take this test series</h2>
+  <div class="grid-3">
+    <article class="card feature"><h3>Exam-like difficulty</h3><p>Questions are modelled on recent CAT papers, including TITA questions with no negative marking.</p></article>
+    <article class="card feature"><h3>Locked sections</h3><p>Once a section ends you cannot return — build the habit of time management that CAT demands.</p></article>
+    <article class="card feature"><h3>Free counselling</h3><p>Talk to a counsellor about colleges and your percentile after you finish.</p></article>
+  </div>
+
+  <h2 class="plain">Frequently asked questions</h2>
+  <details class="faq"><summary>Is the mock test really free?</summary><p>Yes. CAT Full Length Mock 1 is free with one attempt per registered student.</p></details>
+  <details class="faq"><summary>What happens if my internet disconnects?</summary><p>Your answers save as you go and the timer is tracked on our server, so you can reload and continue from where you left off.</p></details>
+  <details class="faq"><summary>When can I see my results?</summary><p>Immediately after you submit, along with solutions to every question.</p></details>
+
+  <section class="cta"><div><h3>Need help choosing the right college?</h3><p>Book a free counselling session with our experts.</p></div><a class="btn btn-lg" href="https://higher.study/enquiry/admissions-2026" id="cta-counsel" target="_blank" rel="noopener">Get free counselling</a></section>
+</main>
+<div id="site-footer"></div>
+
+<!-- Registration / login modal -->
+<div class="overlay" id="reg-overlay" role="dialog" aria-modal="true" aria-labelledby="reg-title">
+  <div class="modal">
+    <div class="modal-head"><h3 id="reg-title">Register to attempt CAT Mock Test 1</h3><p id="reg-sub">All fields are required. Already registered? Log in below.</p><button class="modal-x" data-close aria-label="Close">×</button></div>
+    <form class="modal-body" id="reg-form" novalidate>
+      <div class="field" data-f="name"><label for="f-name">Full name</label><input id="f-name" type="text" autocomplete="name" placeholder="Your full name"><div class="msg">Please enter your full name.</div></div>
+      <div class="field" data-f="mobile"><label for="f-mobile">Mobile number</label><input id="f-mobile" type="tel" inputmode="numeric" maxlength="10" autocomplete="tel" placeholder="10-digit mobile number"><div class="msg">Enter a valid 10-digit mobile number.</div></div>
+      <div class="field" data-f="email"><label for="f-email">Email address</label><input id="f-email" type="email" autocomplete="email" placeholder="you@example.com"><div class="msg">Enter a valid email address.</div></div>
+      <div class="field" data-f="password"><label for="f-pw"><span id="pw-label">Password (only to log back in and view your result)</span></label><div class="pw"><input id="f-pw" type="password" autocomplete="new-password" placeholder="Create a strong password"><button type="button" id="pw-toggle" aria-label="Show password"></button></div><div class="msg">Use at least 8 characters.</div></div>
+      <div id="reg-checks">
+        <label class="check"><input type="checkbox" id="f-terms"><span>I agree to the <a href="#">Terms</a> &amp; <a href="#">Privacy Policy</a> and to receive counseling updates</span></label>
+        <label class="check"><input type="checkbox" id="f-wa"><span>Send me exam updates and offers on WhatsApp</span></label>
+        <div class="field" data-f="terms" style="margin:-4px 0 8px"><div class="msg">Please accept the Terms to continue.</div></div>
+      </div>
+      <button class="btn btn-yellow btn-lg" id="reg-submit" type="submit">Start Test</button>
+      <div class="modal-foot-link" style="margin-top:6px;font-size:13px">Administrator? <a href="admin.html">Admin login</a></div>
+      <div class="modal-foot-link" id="reg-switch">Already registered? <a id="switch-link">Log in</a></div>
+    </form>
+  </div>
+</div>
+
+<script src="assets/js/config.js"></script><script src="assets/js/common.js"></script><script src="assets/js/data.js"></script><script src="assets/js/api.js"></script><script src="assets/js/landing.js"></script>
+</body></html>

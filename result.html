@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Your Result — CAT Full Length Mock 1 | higher.study</title>
+<link rel="icon" href="assets/img/logo.svg">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/app.css">
+</head><body>
+<div id="site-header"></div>
+<main class="container" id="res"></main>
+<div id="site-footer"></div>
+<script src="assets/js/config.js"></script><script src="assets/js/common.js"></script><script src="assets/js/data.js"></script><script src="assets/js/api.js"></script>
+<script>
+(function(){
+  const {$,esc}=HS,u=HS.api.me(),at=HS.api.result(),E=HS_DATA.exam;
+  if(!u){location.replace('index.html');return}
+  HS.header([['Home','index.html'],['My dashboard']]);HS.footer();
+  if(!at){$('#res').innerHTML=`<div class="card empty" style="margin-top:32px"><h2>No completed attempt yet</h2><p>Take a mock test to see your score and analysis here.</p><a class="btn btn-primary" href="index.html#available-tests">Browse tests</a></div>`;return}
+  HS.track('result_viewed');
+  const r=at.result, mm=s=>`${Math.floor(s/60)}m ${s%60}s`;
+  const qs=HS.keys();
+  $('#res').innerHTML=`
+   <section class="res-hero"><div><h1>${esc(E.title)}</h1><p>${esc(u.name)} · submitted ${new Date(at.submittedAt).toLocaleString()}</p></div>
+     <div class="score"><b>${r.marks}</b><span> / ${r.max}</span><p>${r.percentage}%</p></div></section>
+   <section class="kpis">
+     ${[['Questions',r.total],['Attempted',r.attempted],['Correct',r.correct],['Incorrect',r.wrong],['Accuracy',r.accuracy+'%'],['Time taken',mm(r.timeTakenSec)]].map(k=>`<div class="card kpi"><b>${k[1]}</b><span>${k[0]}</span></div>`).join('')}
+   </section>
+   <h2 class="plain" style="margin-top:28px">Section-wise performance</h2>
+   <table class="tbl"><thead><tr><th>Section</th><th>Attempted</th><th>Correct</th><th>Incorrect</th><th>Score</th><th>Max</th></tr></thead><tbody>
+   ${r.sections.map(s=>`<tr><td><b>${s.id}</b></td><td>${s.attempted}/${s.total}</td><td>${s.correct}</td><td>${s.wrong}</td><td><b>${s.marks}</b></td><td>${s.max}</td></tr>`).join('')}</tbody></table>
+   <h2 class="plain">Solutions</h2>
+   ${qs.map(q=>{const a=at.answers[q.id];const none=a===undefined||a===''||a===null;
+     const ok=!none&&(q.type==='TITA'?String(a).trim()===q.ans:a===q.a);
+     const yours=none?'Not attempted':q.type==='TITA'?a:`${'ABCD'[a]}. ${q.o[a]}`;
+     const right=q.type==='TITA'?q.ans:`${'ABCD'[q.a]}. ${q.o[q.a]}`;
+     return `<div class="card rev"><h4>${q.section} · Q${q.no}</h4><div>${esc(q.q)}</div>
+      <p style="margin:8px 0 0"><span class="${none?'sk':ok?'ok':'bad'}">${none?'Skipped':ok?'Correct':'Incorrect'}</span> · Your answer: ${esc(yours)}${ok?'':` · Correct answer: <b>${esc(right)}</b>`}</p>
+      <div class="sol"><b>Solution:</b> ${esc(q.sol)}</div></div>`}).join('')}
+   <section class="cta"><div><h3>Want to improve your percentile?</h3><p>Talk to a counsellor for a personalised plan.</p></div><a class="btn btn-lg" href="https://higher.study/enquiry/admissions-2026" id="cta" target="_blank" rel="noopener">Get free counselling</a></section>
+   <p style="text-align:center;margin-top:24px"><a href="#" id="reset" style="color:var(--muted);text-decoration:underline">Reset demo attempt (prototype only)</a></p>`;
+  $('#cta').href=HS.counsellingUrl();$('#cta').addEventListener('click',()=>HS.track('counselling_button_clicked'));
+  $('#reset').onclick=e=>{e.preventDefault();HS.api.reset();location.href='index.html'};
+})();
+</script></body></html>
