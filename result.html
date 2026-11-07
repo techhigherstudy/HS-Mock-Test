@@ -1,44 +1,49 @@
 <!doctype html>
 <html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Your Result — CAT Full Length Mock 1 | higher.study</title>
-<link rel="icon" href="assets/img/logo.svg">
+<title>Your Result — higher.study</title>
+<link rel="icon" href="logo.svg">
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/css/app.css">
+<link rel="stylesheet" href="app.css">
 </head><body>
 <div id="site-header"></div>
 <main class="container" id="res"></main>
 <div id="site-footer"></div>
-<script src="assets/js/config.js"></script><script src="assets/js/common.js"></script><script src="assets/js/data.js"></script><script src="assets/js/api.js"></script>
+<script src="config.js"></script><script src="common.js"></script><script src="data.js"></script><script src="db.js"></script><script src="api.js"></script><script src="auth.js"></script>
 <script>
 (function(){
-  const {$,esc}=HS,u=HS.api.me(),at=HS.api.result(),E=HS_DATA.exam;
+  const {$,esc}=HS,u=HS.api.me();
   if(!u){location.replace('index.html');return}
-  HS.header([['Home','index.html'],['My dashboard']]);HS.footer();
-  if(!at){$('#res').innerHTML=`<div class="card empty" style="margin-top:32px"><h2>No completed attempt yet</h2><p>Take a mock test to see your score and analysis here.</p><a class="btn btn-primary" href="index.html#available-tests">Browse tests</a></div>`;return}
-  HS.track('result_viewed');
-  const r=at.result, mm=s=>`${Math.floor(s/60)}m ${s%60}s`;
-  const qs=HS.keys();
+  const at=HS.api.attemptById(new URLSearchParams(location.search).get('a'));
+  HS.header([['Home','index.html'],['My dashboard','dashboard.html'],['Result']]);HS.footer();
+  if(!at||at.status!=='submitted'){
+    if(at&&at.status==='in_progress'){location.replace('exam.html?a='+encodeURIComponent(at.id));return}
+    $('#res').innerHTML=`<div class="card empty" style="margin-top:32px"><h2>Result not found</h2><p>We could not find this attempt on your account.</p><a class="btn btn-primary" href="dashboard.html">Go to dashboard</a></div>`;return}
+  const e=HS.db.get('exams',at.examId)||{title:'Test'},r=at.result,rv=HS.api.review(at),mm=s=>`${Math.floor(s/60)}m ${s%60}s`,L='ABCDEF';
+  document.title='Result — '+e.title;HS.track('result_viewed',{exam:e.title});
+  const st=HS.api.state(at.examId),again=st.kind==='start'&&at.examId;
+  const verdict=r.passed===true?'<span class="chip g">Passed</span>':r.passed===false?'<span class="chip r">Not passed</span>':'';
+  const fmtAns=(q,a)=>{if(!HS.api.isAnswered(a))return 'Not attempted';
+    if(q.type==='MSQ')return a.map(i=>`${L[i]}. ${q.options[i]}`).join(', ');
+    if(q.type==='NUM'||q.type==='TEXT')return String(a);return `${L[a]}. ${q.options[a]}`};
+  const fmtOk=q=>q.type==='MSQ'?q.correct.map(i=>`${L[i]}. ${q.options[i]}`).join(', '):(q.type==='NUM'||q.type==='TEXT')?String(q.correct):`${L[q.correct]}. ${q.options[q.correct]}`;
+  const sol=rv&&rv.showSolutions?`<h2 class="plain" style="margin-top:30px">Solutions</h2>`+rv.questions.map((q,i)=>{
+      const d=rv.detail[q.id]||{status:'skipped'},a=at.answers[q.id],cls=d.status==='correct'?'ok':d.status==='wrong'?'bad':'sk';
+      return `<div class="card rev"><h4>${esc(HS.db.secName(q.examId,q.sectionId)==='—'?'Question':HS.db.secName(q.examId,q.sectionId))} · Q${i+1}</h4>${q.passage?`<div style="font-size:14px;color:var(--muted);margin-bottom:8px">${q.passage}</div>`:''}<div>${esc(q.q)}</div>
+       <p style="margin:8px 0 0"><span class="${cls}">${d.status==='correct'?'Correct':d.status==='wrong'?'Incorrect':'Skipped'}</span> · Your answer: ${esc(fmtAns(q,a))}${d.status==='correct'?'':` · Correct answer: <b>${esc(fmtOk(q))}</b>`} · Marks: ${d.marks||0}</p>
+       ${q.expl?`<div class="sol"><b>Solution:</b> ${esc(q.expl)}</div>`:''}</div>`}).join(''):
+    `<div class="card empty" style="margin-top:24px">The answer key for this test is not shown to students.</div>`;
   $('#res').innerHTML=`
-   <section class="res-hero"><div><h1>${esc(E.title)}</h1><p>${esc(u.name)} · submitted ${new Date(at.submittedAt).toLocaleString()}</p></div>
+   <section class="res-hero"><div><h1>${esc(e.title)}</h1><p>${esc(u.name)} · submitted ${new Date(at.submittedAt).toLocaleString()}${at.auto?' · auto-submitted':''}</p><p style="margin-top:8px">${verdict}${e.passMarks?` <span style="opacity:.9">Pass marks: ${e.passMarks}</span>`:''}</p></div>
      <div class="score"><b>${r.marks}</b><span> / ${r.max}</span><p>${r.percentage}%</p></div></section>
-   <section class="kpis">
-     ${[['Questions',r.total],['Attempted',r.attempted],['Correct',r.correct],['Incorrect',r.wrong],['Accuracy',r.accuracy+'%'],['Time taken',mm(r.timeTakenSec)]].map(k=>`<div class="card kpi"><b>${k[1]}</b><span>${k[0]}</span></div>`).join('')}
-   </section>
-   <h2 class="plain" style="margin-top:28px">Section-wise performance</h2>
-   <table class="tbl"><thead><tr><th>Section</th><th>Attempted</th><th>Correct</th><th>Incorrect</th><th>Score</th><th>Max</th></tr></thead><tbody>
-   ${r.sections.map(s=>`<tr><td><b>${s.id}</b></td><td>${s.attempted}/${s.total}</td><td>${s.correct}</td><td>${s.wrong}</td><td><b>${s.marks}</b></td><td>${s.max}</td></tr>`).join('')}</tbody></table>
-   <h2 class="plain">Solutions</h2>
-   ${qs.map(q=>{const a=at.answers[q.id];const none=a===undefined||a===''||a===null;
-     const ok=!none&&(q.type==='TITA'?String(a).trim()===q.ans:a===q.a);
-     const yours=none?'Not attempted':q.type==='TITA'?a:`${'ABCD'[a]}. ${q.o[a]}`;
-     const right=q.type==='TITA'?q.ans:`${'ABCD'[q.a]}. ${q.o[q.a]}`;
-     return `<div class="card rev"><h4>${q.section} · Q${q.no}</h4><div>${esc(q.q)}</div>
-      <p style="margin:8px 0 0"><span class="${none?'sk':ok?'ok':'bad'}">${none?'Skipped':ok?'Correct':'Incorrect'}</span> · Your answer: ${esc(yours)}${ok?'':` · Correct answer: <b>${esc(right)}</b>`}</p>
-      <div class="sol"><b>Solution:</b> ${esc(q.sol)}</div></div>`}).join('')}
-   <section class="cta"><div><h3>Want to improve your percentile?</h3><p>Talk to a counsellor for a personalised plan.</p></div><a class="btn btn-lg" href="https://higher.study/enquiry/admissions-2026" id="cta" target="_blank" rel="noopener">Get free counselling</a></section>
-   <p style="text-align:center;margin-top:24px"><a href="#" id="reset" style="color:var(--muted);text-decoration:underline">Reset demo attempt (prototype only)</a></p>`;
+   <div class="res-actions"><a class="btn btn-primary" href="dashboard.html">Back to dashboard</a><a class="btn btn-ghost" href="index.html">Home</a><a class="btn btn-ghost" href="mocks.html">More mock tests</a>${again?`<button class="btn btn-ghost" id="again">Attempt again</button>`:''}</div>
+   <section class="kpis">${[['Questions',r.total],['Attempted',r.attempted],['Correct',r.correct],['Incorrect',r.wrong],['Accuracy',r.accuracy+'%'],['Time taken',mm(r.timeTakenSec)]].map(k=>`<div class="card kpi"><b>${k[1]}</b><span>${k[0]}</span></div>`).join('')}</section>
+   <h2 class="plain" style="margin-top:28px">${r.sections.length>1?'Section-wise performance':'Performance'}</h2>
+   <div class="tbl-wrap"><table class="tbl"><thead><tr><th>Section</th><th>Attempted</th><th>Correct</th><th>Incorrect</th><th>Score</th><th>Max</th></tr></thead><tbody>
+   ${r.sections.map(s=>`<tr><td><b>${esc(s.name)}</b></td><td>${s.attempted}/${s.total}</td><td>${s.correct}</td><td>${s.wrong}</td><td><b>${s.marks}</b></td><td>${s.max}</td></tr>`).join('')}</tbody></table></div>
+   ${sol}
+   <section class="cta" style="margin-top:28px"><div><h3>Want to improve your score?</h3><p>Check which colleges fit your score, or talk to a counsellor.</p></div><div style="display:flex;gap:10px;flex-wrap:wrap"><a class="btn btn-lg" href="predictor.html?e=${at.examId}&p=${Math.round(r.percentage)}">College predictor</a><a class="btn btn-lg" id="cta" target="_blank" rel="noopener">Get free counselling</a></div></section>`;
   $('#cta').href=HS.counsellingUrl();$('#cta').addEventListener('click',()=>HS.track('counselling_button_clicked'));
-  $('#reset').onclick=e=>{e.preventDefault();HS.api.reset();location.href='index.html'};
+  const ag=$('#again');if(ag)ag.onclick=()=>HS.goExam(at.examId);
 })();
 </script></body></html>

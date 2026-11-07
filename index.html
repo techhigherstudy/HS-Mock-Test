@@ -1,11 +1,11 @@
 <!doctype html>
 <html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>CAT Mock Tests — higher.study</title>
+<title>Free Mock Tests — higher.study</title>
 <meta name="description" content="Practice with realistic CAT full-length mocks with sectional timers, instant score and detailed solutions.">
-<link rel="icon" href="assets/img/logo.svg">
+<link rel="icon" href="logo.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/css/app.css">
+<link rel="stylesheet" href="app.css">
 </head><body>
 <div id="site-header"></div>
 <main class="container">
@@ -21,13 +21,12 @@
     <article class="card feature"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="9" r="5"/><path d="m8.5 13.5-1.5 7 5-3 5 3-1.5-7"/></svg><h3>Detailed solutions for every question</h3><p>Step-by-step explanations for every MCQ and TITA question once you finish the test.</p></article>
   </section>
 
-  <h2 class="section" id="available-tests">Available CAT tests</h2>
-  <div class="tabs" id="tabs" role="tablist">
-    <button class="active" data-cat="full" role="tab">Full Length Mocks</button>
-    <button data-cat="sectional" role="tab">Sectional Tests</button>
-    <button data-cat="pyp" role="tab">Previous Year Papers</button>
-  </div>
+  <h2 class="section" id="available-tests">Available mock tests</h2>
+  <div class="tabs" id="tabs" role="tablist"></div>
   <div class="tests" id="tests"></div>
+
+  <h2 class="plain">Free resources</h2>
+  <div class="grid-3" id="res-cards"></div>
 
   <h2 class="plain">How it works</h2>
   <div class="steps">
@@ -52,26 +51,5 @@
 </main>
 <div id="site-footer"></div>
 
-<!-- Registration / login modal -->
-<div class="overlay" id="reg-overlay" role="dialog" aria-modal="true" aria-labelledby="reg-title">
-  <div class="modal">
-    <div class="modal-head"><h3 id="reg-title">Register to attempt CAT Mock Test 1</h3><p id="reg-sub">All fields are required. Already registered? Log in below.</p><button class="modal-x" data-close aria-label="Close">×</button></div>
-    <form class="modal-body" id="reg-form" novalidate>
-      <div class="field" data-f="name"><label for="f-name">Full name</label><input id="f-name" type="text" autocomplete="name" placeholder="Your full name"><div class="msg">Please enter your full name.</div></div>
-      <div class="field" data-f="mobile"><label for="f-mobile">Mobile number</label><input id="f-mobile" type="tel" inputmode="numeric" maxlength="10" autocomplete="tel" placeholder="10-digit mobile number"><div class="msg">Enter a valid 10-digit mobile number.</div></div>
-      <div class="field" data-f="email"><label for="f-email">Email address</label><input id="f-email" type="email" autocomplete="email" placeholder="you@example.com"><div class="msg">Enter a valid email address.</div></div>
-      <div class="field" data-f="password"><label for="f-pw"><span id="pw-label">Password (only to log back in and view your result)</span></label><div class="pw"><input id="f-pw" type="password" autocomplete="new-password" placeholder="Create a strong password"><button type="button" id="pw-toggle" aria-label="Show password"></button></div><div class="msg">Use at least 8 characters.</div></div>
-      <div id="reg-checks">
-        <label class="check"><input type="checkbox" id="f-terms"><span>I agree to the <a href="#">Terms</a> &amp; <a href="#">Privacy Policy</a> and to receive counseling updates</span></label>
-        <label class="check"><input type="checkbox" id="f-wa"><span>Send me exam updates and offers on WhatsApp</span></label>
-        <div class="field" data-f="terms" style="margin:-4px 0 8px"><div class="msg">Please accept the Terms to continue.</div></div>
-      </div>
-      <button class="btn btn-yellow btn-lg" id="reg-submit" type="submit">Start Test</button>
-      <div class="modal-foot-link" style="margin-top:6px;font-size:13px">Administrator? <a href="admin.html">Admin login</a></div>
-      <div class="modal-foot-link" id="reg-switch">Already registered? <a id="switch-link">Log in</a></div>
-    </form>
-  </div>
-</div>
-
-<script src="assets/js/config.js"></script><script src="assets/js/common.js"></script><script src="assets/js/data.js"></script><script src="assets/js/api.js"></script><script src="assets/js/landing.js"></script>
+<script src="config.js"></script><script src="common.js"></script><script src="data.js"></script><script src="db.js"></script><script src="api.js"></script><script src="auth.js"></script><script src="tests.js"></script><script src="landing.js"></script>
 </body></html>

@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>My Dashboard — higher.study</title>
+<link rel="icon" href="logo.svg">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="app.css">
+</head><body>
+<div id="site-header"></div>
+<main class="container" id="dash"></main>
+<div id="site-footer"></div>
+<script src="config.js"></script><script src="common.js"></script><script src="data.js"></script><script src="db.js"></script><script src="api.js"></script><script src="auth.js"></script><script src="tests.js"></script>
+<script>
+(function(){
+  const {$,esc}=HS,u=HS.api.me();
+  if(!u){location.replace('index.html');return}
+  HS.header([['Home','index.html'],['My dashboard']]);HS.footer();HS.track('dashboard_viewed');
+  const sm=HS.api.summary(),at=HS.api.attempts().slice().sort((a,b)=>b.startedAt-a.startedAt),n=x=>Math.round(x*100)/100;
+  const row=a=>{const e=HS.db.get('exams',a.examId)||{title:'(removed test)'},r=a.result,done=a.status==='submitted';
+    const stat=!done?'<span class="chip y">In progress</span>':r.passed===true?'<span class="chip g">Passed</span>':r.passed===false?'<span class="chip r">Failed</span>':'<span class="chip">Completed</span>';
+    const act=done?`<a class="btn btn-primary" href="result.html?a=${encodeURIComponent(a.id)}">View Result</a>`:(e.allowResume?`<a class="btn btn-primary" href="exam.html?a=${encodeURIComponent(a.id)}">Resume</a>`:`<a class="btn btn-ghost" href="exam.html?a=${encodeURIComponent(a.id)}">Finish &amp; submit</a>`);
+    const st=HS.api.state(a.examId),again=done&&st.kind==='start'?`<button class="btn btn-ghost" data-again="${a.examId}">Attempt again</button>`:'';
+    return `<tr data-ex="${a.examId}"><td><b>${esc(e.title)}</b></td><td>${new Date(a.startedAt).toLocaleDateString()}</td><td>${done?`${r.marks}/${r.max}`:'—'}</td><td>${done?r.percentage+'%':'—'}</td><td>${stat}</td><td class="act">${act}${again}</td></tr>`};
+  $('#dash').innerHTML=`
+   <section class="dash-hero"><h1>Hi, ${esc(u.name.split(' ')[0])}</h1><p>Your attempts, results and saved progress — all in one place.</p></section>
+   <section class="dash-kpis">${[['Total exams attempted',sm.attempted],['Exams completed',sm.completed],['Exams in progress',sm.inProgress],['Exams passed',sm.passed],['Exams failed',sm.failed],['Total marks obtained',sm.marks],['Average percentage',sm.avg+'%'],['Best performance',sm.best?sm.best.pct+'%':'—',sm.best?sm.best.exam:'']].map(k=>`<div class="card kpi"><b>${k[1]}</b><span>${k[0]}</span>${k[2]?`<small>${esc(k[2])}</small>`:''}</div>`).join('')}</section>
+   <div class="dash-sec"><h2>Examination history</h2><div style="display:flex;gap:8px;flex-wrap:wrap"><select class="fi" id="f-ex"><option value="">All examinations</option></select><select class="fi" id="f-st"><option value="">All statuses</option><option value="submitted">Completed</option><option value="in_progress">In progress</option></select></div></div>
+   <div id="hist"></div>
+   <div class="dash-sec"><h2>Continue your preparation</h2></div>
+   <div class="lib-grid">${HS.menuItems('resources').concat(HS.menuItems('tools')).map(m=>`<a class="card lib-item" href="${esc(m.href)}"><h3>${esc(m.label)}</h3><p>${{mocks:'Attempt another mock test.',papers:'Previous year question papers.',materials:'Notes, formulae and guides.',predictor:'See colleges for your score.'}[m.key]||''}</p></a>`).join('')}</div>`;
+  const exs=[...new Set(at.map(a=>a.examId))];
+  $('#f-ex').innerHTML+=exs.map(i=>`<option value="${i}">${esc(HS.db.examName(i))}</option>`).join('');
+  function render(){const fe=$('#f-ex').value,fs=$('#f-st').value,l=at.filter(a=>(!fe||a.examId==fe)&&(!fs||a.status===fs));
+    $('#hist').innerHTML=at.length?(l.length?`<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Examination</th><th>Attempt date</th><th>Marks</th><th>Percentage</th><th>Status</th><th>Action</th></tr></thead><tbody>${l.map(row).join('')}</tbody></table></div>`:'<div class="card empty">No attempts match these filters.</div>')
+      :`<div class="card empty"><h3 style="margin:0 0 6px">You have not attempted any test yet</h3><p>Pick an examination and start your first mock test.</p><a class="btn btn-primary" href="mocks.html">Browse mock tests</a></div>`}
+  render();$('#f-ex').onchange=render;$('#f-st').onchange=render;
+  $('#hist').addEventListener('click',e=>{const b=e.target.closest('[data-again]');if(b)HS.goExam(+b.dataset.again)});
+})();
+</script></body></html>

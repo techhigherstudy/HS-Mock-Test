@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>College Predictor — higher.study</title>
+<link rel="icon" href="logo.svg">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="app.css">
+</head><body>
+<div id="site-header"></div>
+<main class="container">
+  <section class="hero"><h1>College <em>predictor</em></h1><p>Enter your examination and score to see colleges where you may have a reasonable chance, based on the cutoffs our team has recorded.</p></section>
+  <form class="card pred-form" id="pf" novalidate>
+    <div><label for="p-ex">Examination *</label><select class="fi" id="p-ex"></select></div>
+    <div><label for="p-score">Score / percentage *</label><input class="fi" id="p-score" type="number" step="0.01" min="0" placeholder="e.g. 78"></div>
+    <div><label for="p-rank">Rank (if applicable)</label><input class="fi" id="p-rank" type="number" min="1" placeholder="e.g. 4500"></div>
+    <div><label for="p-cat">Category</label><select class="fi" id="p-cat"></select></div>
+    <div><label for="p-course">Preferred course</label><select class="fi" id="p-course"></select></div>
+    <div><label for="p-state">Preferred state</label><select class="fi" id="p-state"></select></div>
+    <div><label for="p-type">College type</label><select class="fi" id="p-type"><option value="">Any</option><option>Government</option><option>Private</option><option>Deemed</option></select></div>
+    <div class="full" id="p-err" style="color:var(--danger);font-size:13px;display:none"></div>
+    <div class="full"><button class="btn btn-primary btn-lg" type="submit">Predict colleges</button> <button class="btn btn-ghost btn-lg" type="button" id="p-clear">Reset</button></div>
+  </form>
+  <div id="out"></div>
+  <div class="disc"><b>Please note:</b> these are estimates based on the eligibility and cutoff data entered by higher.study. They are not a guarantee. Final admission depends on the college's official criteria, seat availability and admission process. Always confirm on the college's official website.</div>
+</main>
+<div id="site-footer"></div>
+<script src="config.js"></script><script src="common.js"></script><script src="data.js"></script><script src="db.js"></script><script src="api.js"></script><script src="auth.js"></script>
+<script>
+(function(){
+  const {$,esc}=HS;HS.header([['Home','index.html'],['Tools'],['College Predictor']]);HS.footer();HS.track('website_visited');
+  const cols=()=>HS.db.all('colleges').filter(c=>c.published);
+  const exIds=[...new Set(cols().flatMap(c=>c.cutoffs.map(x=>x.examId)))].filter(i=>HS.db.get('exams',i)&&!HS.db.get('exams',i).deleted);
+  const opt=(el,first,vals)=>$(el).innerHTML=`<option value="">${first}</option>`+vals.map(v=>`<option value="${esc(v[0])}">${esc(v[1])}</option>`).join('');
+  opt('#p-ex','Select examination',exIds.map(i=>[i,HS.db.examName(i)]));
+  opt('#p-cat','Any / not applicable',[...new Set(['General','OBC','SC','ST','EWS'].concat(cols().flatMap(c=>c.cutoffs.map(x=>x.category)).filter(x=>x&&x!=='All')))].map(x=>[x,x]));
+  opt('#p-course','Any course',[...new Set(cols().flatMap(c=>c.courses))].sort().map(x=>[x,x]));
+  opt('#p-state','Any state',[...new Set(cols().map(c=>c.state))].sort().map(x=>[x,x]));
+  const q=new URLSearchParams(location.search);
+  if(q.get('e')&&exIds.includes(+q.get('e')))$('#p-ex').value=q.get('e');if(q.get('p'))$('#p-score').value=q.get('p');
+  const chance=(v,rank,cut)=>{
+    if(cut.metric==='rank'){if(!rank)return null;const r=rank/cut.value;return r<=0.9?'High':r<=1.1?'Moderate':r<=1.25?'Low':null}
+    if(v==='')return null;const d=+v-cut.value;return d>=5?'High':d>=-3?'Moderate':d>=-10?'Low':null};
+  const CH={High:'g',Moderate:'y',Low:'r'};
+  $('#pf').addEventListener('submit',e=>{
+    e.preventDefault();const ex=+$('#p-ex').value,sc=$('#p-score').value,rk=+$('#p-rank').value||0,cat=$('#p-cat').value,co=$('#p-course').value,st=$('#p-state').value,ty=$('#p-type').value,err=$('#p-err');
+    err.style.display='none';
+    if(!ex){err.textContent='Please choose an examination.';err.style.display='block';return}
+    if(sc===''&&!rk){err.textContent='Enter your score or percentage (or your rank).';err.style.display='block';return}
+    if(sc!==''&&(+sc<0||+sc>100000)){err.textContent='Enter a valid score.';err.style.display='block';return}
+    const res=[];
+    cols().forEach(c=>{
+      if(st&&c.state!==st||ty&&c.type!==ty)return;
+      c.cutoffs.filter(x=>x.examId===ex&&(!co||x.course===co)&&(!cat||x.category===cat||x.category==='All')).forEach(x=>{const ch=chance(sc,rk,x);if(ch)res.push({c,x,ch})})});
+    const ord={High:0,Moderate:1,Low:2};res.sort((a,b)=>ord[a.ch]-ord[b.ch]);
+    try{HS.db.add('predLog',{examId:ex,score:sc,rank:rk,category:cat,course:co,state:st,type:ty,results:res.length,studentId:(HS.api.me()||{}).studentId||'',at:new Date().toISOString()})}catch(x){}
+    HS.track('predictor_used',{exam:HS.db.examName(ex)});
+    $('#out').innerHTML=`<h2 class="plain">${res.length?`${res.length} possible match${res.length>1?'es':''}`:'No matching colleges'}</h2>`+(res.length?`<div class="lib-grid" style="grid-template-columns:repeat(2,1fr)">${res.map(r=>{const c=r.c,x=r.x;
+      return `<article class="card col-card"><div class="col-logo" style="background:${esc(c.color||'#ca452e')}">${c.logo?`<img src="${esc(c.logo)}" alt="">`:esc((c.short||c.name).slice(0,3))}</div><div style="flex:1"><h3>${esc(c.name)}</h3>
+        <div class="meta">${esc(c.city)}, ${esc(c.state)} · ${esc(c.type)}</div><span class="chip ${CH[r.ch]}">Estimated chance: ${r.ch}</span>
+        <div class="rows" style="margin-top:8px"><div><b>Course:</b> ${esc(x.course)} · <b>Category:</b> ${esc(x.category)}</div><div><b>Previous cutoff (${esc(x.year)}):</b> ${x.metric==='rank'?'Rank ':'Score '}${esc(x.value)}</div><div><b>Courses available:</b> ${esc(c.courses.join(', '))}</div><div><b>Eligibility:</b> ${esc(c.eligibility||'See college website')}</div><div><b>Fees:</b> ${esc(c.fees||'Check with college')}</div></div>
+        <div class="btnrow">${c.admissionUrl?`<a class="btn btn-ghost" href="${esc(c.admissionUrl)}" target="_blank" rel="noopener">Admission info</a>`:''}<a class="btn btn-primary" href="${esc(HS.counsellingUrl())}" target="_blank" rel="noopener" data-enq="${esc(c.name)}">Enquire with a counsellor</a></div></div></article>`}).join('')}</div>`:
+      `<div class="card empty">We have no recorded cutoffs that match these details yet. Try changing the filters, or talk to a counsellor.<br><br><a class="btn btn-primary" href="${esc(HS.counsellingUrl())}" target="_blank" rel="noopener">Get free counselling</a></div>`);
+    $('#out').scrollIntoView({behavior:'smooth'})});
+  $('#out').addEventListener('click',e=>{const b=e.target.closest('[data-enq]');if(b)HS.track('predictor_enquiry',{exam:b.dataset.enq})});
+  $('#p-clear').onclick=()=>{$('#pf').reset();$('#out').innerHTML=''};
+})();
+</script></body></html>

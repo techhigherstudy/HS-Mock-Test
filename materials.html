@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Exam Study Material — higher.study</title>
+<link rel="icon" href="logo.svg">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="app.css">
+</head><body>
+<div id="site-header"></div>
+<main class="container">
+  <section class="hero"><h1>Exam <em>study material</em></h1><p>Notes, formulae, guides, practice sets and videos organised by exam, section and topic.</p></section>
+  <div class="lib-bar"><input class="fi" id="q" type="search" placeholder="Search material" aria-label="Search"><select class="fi" id="ex" aria-label="Examination"></select><select class="fi" id="ty" aria-label="Content type"></select><select class="fi" id="sc" aria-label="Section"></select><button class="btn btn-ghost" id="clear">Clear filters</button></div>
+  <div id="count" class="lib-count"></div><div class="lib-grid" id="list"></div>
+</main>
+<div class="overlay" id="m-pv"><div class="modal" style="max-width:900px;padding:16px"><button class="modal-x" style="color:var(--ink)" data-close>×</button><h3 id="pv-t" style="margin:0 30px 10px 4px"></h3><iframe class="pv" id="pv" title="Paper preview"></iframe></div></div>
+<div id="site-footer"></div>
+<script src="config.js"></script><script src="common.js"></script><script src="data.js"></script><script src="db.js"></script><script src="api.js"></script><script src="auth.js"></script><script src="library.js"></script>
+<script>HS.library({kind:'materials',crumb:'Exam Study Material'});</script></body></html>
