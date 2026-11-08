@@ -92,7 +92,7 @@ HS.header=function(crumbs){
     if(kids.length)return `<div class="dd"><a href="#" class="dd-t" aria-haspopup="true" aria-expanded="false">${HS.esc(m.t)}${badge}${HS.icons.chev}</a><div class="dd-menu">${kids.map(k=>`<a href="${HS.esc(k.href)}"${HS.isExternal(k.href)?' target="_blank" rel="noopener"':''}>${HS.esc(k.label)}</a>`).join('')}</div></div>`;
     return `<a href="${HS.esc(m.href||'#')}"${HS.isExternal(m.href||'')?' target="_blank" rel="noopener"':''}>${HS.esc(m.t)}${badge}</a>`}).join('');
   let adm=null;try{adm=localStorage.getItem('hs_admin_session')}catch(e){}
-  const admBtn=adm?`<a class="btn btn-outline" href="admin.html">Admin panel</a>`:'';
+  const admBtn='';
   const right=admBtn+(u?`<a class="btn btn-outline" href="dashboard.html">My dashboard</a><a href="#" id="signout" style="font-weight:600">Sign out</a>`:`<button class="btn btn-primary btn-lg" data-open-register style="padding:14px 28px">Login / Register</button>`);
   const cr=(crumbs||[]).map((c,i)=>i===crumbs.length-1?`<span class="cur">${HS.esc(c[0])}</span>`:`<a href="${c[1]||'#'}">${HS.esc(c[0])}</a><span>›</span>`).join('');
   const bn=HS.cms().banner;document.getElementById('site-header').innerHTML=(bn&&bn.on&&bn.text?`<div style="background:var(--yellow);color:#4a2a00;text-align:center;padding:8px 16px;font-weight:700;font-size:14px">${HS.esc(bn.text)}</div>`:'')+`
