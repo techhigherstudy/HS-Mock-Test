@@ -16,3 +16,10 @@ Logins (prototype only — change before going public): student `demo@higher.stu
 
 ## Important: this is a prototype
 All data lives in the browser (`localStorage`), so students registered on one device do not appear in the admin panel on another. Permissions are enforced in the browser only. Every mock `HS.api` method is commented with the Laravel endpoint it becomes. The next phase (Laravel 12 + MySQL: migrations, server-side filtering/pagination, Sanctum auth, server-side permissions, file storage, queued Sheets sync) turns these into the real thing.
+
+## College Predictor: using your website's data
+- Each result has a **View on higher.study** button (uses the college's "Page on higher.study" link, else higher.study/colleges) tagged `utm_source=mock-test&utm_medium=college-predictor&utm_campaign=<exam>` so you can see this traffic in your main site's analytics.
+- **Sync from higher.study** (Admin > College Management): set `COLLEGES_FEED_URL` in `config.js` to a JSON feed on your site:
+  `{"colleges":[{"externalId":"101","name":"…","city":"…","state":"…","type":"Government","courses":["MBA"],"fees":"…","eligibility":"…","pageUrl":"https://higher.study/colleges/…","admissionUrl":"…","logo":"https://…","cutoffs":[{"exam":"CAT","course":"MBA","category":"General","metric":"score","value":85,"year":2025}]}]}`
+  New colleges arrive unpublished for review; existing ones are updated by `externalId` (or name + city), never duplicated.
+  A browser can only read that feed if higher.study sends `Access-Control-Allow-Origin` for this site. In the Laravel phase the same sync runs as a scheduled server job, which has no such limit.

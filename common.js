@@ -176,3 +176,8 @@ HS.sheet=(function(){
 })();
 setTimeout(()=>{try{HS.sheet.flush()}catch(e){}},1500);
 window.addEventListener('online',()=>{try{HS.sheet.flush()}catch(e){}});
+
+/* Link to a college on higher.study with UTM tags, so predictor traffic is visible in the main site's analytics. */
+HS.collegeUrl=function(c,examId){const base=c.pageUrl||'https://higher.study/colleges';
+  try{const u=new URL(base);u.searchParams.set('utm_source','mock-test');u.searchParams.set('utm_medium','college-predictor');
+    try{u.searchParams.set('utm_campaign',(HS.db.examName(examId)||'predictor').toLowerCase().replace(/[^a-z0-9]+/g,'-'))}catch(e){}return u.toString()}catch(e){return base}};
