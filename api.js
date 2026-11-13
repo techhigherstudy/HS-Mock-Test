@@ -14,7 +14,8 @@ const DB=()=>HS.db;
 const allAtt=()=>get(K.att,[]);
 const saveAtt=a=>set(K.att,a);
 function me(){return get(K.user,null)}
-function myAttempts(){const u=me();return u?allAtt().filter(a=>a.studentId===u.studentId):[]}
+function myAttempts(){const u=me();return u?allAtt().filter(a=>a.studentId===u.studentId&&a.kind!=='daily'):[]}   // mock tests only
+function myDaily(){const u=me();return u?allAtt().filter(a=>a.studentId===u.studentId&&a.kind==='daily'):[]}
 
 /* ---------- scoring (per question type) ---------- */
 const norm=s=>String(s??'').trim().toLowerCase();
@@ -40,7 +41,7 @@ function score(at){
   const t=secs.reduce((a,s)=>({attempted:a.attempted+s.attempted,correct:a.correct+s.correct,wrong:a.wrong+s.wrong,skipped:a.skipped+s.skipped,marks:a.marks+s.marks,max:a.max+s.max}),{attempted:0,correct:0,wrong:0,skipped:0,marks:0,max:0});
   t.marks=Math.round(t.marks*100)/100;
   const pct=t.max?+(Math.max(t.marks,0)/t.max*100).toFixed(2):0;
-  const pass=e&&e.passMarks>0?t.marks>=e.passMarks:null;
+  const pass=at.kind!=='daily'&&e&&e.passMarks>0?t.marks>=e.passMarks:null;
   return {sections:secs,detail,...t,total:qs.length,percentage:pct,accuracy:t.attempted?+(t.correct/t.attempted*100).toFixed(1):0,
     timeTakenSec:Math.max(0,Math.round(((at.submittedAt||clock.now())-at.startedAt)/1000)),passed:pass};
 }
@@ -57,7 +58,7 @@ HS.api={
     const a=HS.attr?HS.attr.snapshot():{};
     const u={studentId:uid('STU'),leadId:uid('LD'),name:p.name,mobile:p.mobile,email:p.email,pw:btoa(p.password),at:new Date().toISOString(),examId:p.examId||0,
       utm:HS.attr?HS.attr.utm(a.last):{},attr:{first:a.first||{},last:a.last||{},landing:a.landing||location.href,referrer:a.referrer||document.referrer||'',device:a.device,browser:a.browser,examId:p.examId||0}};
-    users.push(u);set(K.users,users);set(K.user,u);HS.track('registration_completed',{exam:p.examId?DB().examName(p.examId):''});
+    users.push(u);set(K.users,users);set(K.user,u);try{HS.act&&HS.act.link(u)}catch(e){}HS.track('registration_completed',{exam:p.examId?DB().examName(p.examId):''});
     try{HS.ads&&HS.ads.conversion(u)}catch(e){}
     return u},
   /* POST /api/login */ async login(p){await sleep(500);const u=get(K.users,[]).find(x=>(x.email===p.id||x.mobile===p.id)&&x.pw===btoa(p.password));
@@ -65,7 +66,22 @@ HS.api={
   logout(){try{localStorage.removeItem(K.user)}catch(e){}},
 
   /* ---------- attempts ---------- */
-  attempts:myAttempts,
+  attempts:myAttempts,dailyAttempts:myDaily,
+  /* POST /api/daily-quizzes/:id/attempts  (server picks the option order and keeps the mapping) */
+  startDaily(quiz){
+    const u=me();if(!u)return {ok:false,error:'login'};
+    const mine=allAtt().filter(a=>a.studentId===u.studentId&&a.kind==='daily'&&a.dailyId===quiz.id),open=mine.find(a=>a.status==='in_progress');
+    if(open)return {ok:true,attempt:open,resumed:true};
+    const S=HS.dq.settings(),done=mine.filter(a=>a.status==='submitted').length;
+    if(done>0&&done>S.retakes)return {ok:false,error:'limit'};
+    const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+    const n=clock.now(),qids=shuffle(quiz.qids),perm={};
+    qids.forEach(id=>{const q=DB().get('questions',id);if(q&&(q.type==='MCQ'||q.type==='MSQ'))perm[id]=shuffle(q.options.map((_,i)=>i))});
+    const minutes=Math.max(1,Math.round(quiz.qids.length*S.minutesPerQ));
+    const at={id:uid('DQA'),kind:'daily',dailyId:quiz.id,retake:done>0,title:'Daily Quiz · '+DB().examName(quiz.examId)+' · '+quiz.date,examId:quiz.examId,studentId:u.studentId,leadId:u.leadId,startedAt:n,status:'in_progress',
+      secs:[],qids,timer:'global',secIdx:0,secEnds:[],endsAt:n+minutes*60000,minutes,answers:{},visited:{},marked:{},lastQ:{},perm};
+    const all=allAtt();all.push(at);saveAtt(all);HS.track('daily_quiz_started',{exam:DB().examName(quiz.examId)});try{HS.act('daily_quiz_started',{examId:quiz.examId,tool:'daily-quiz'})}catch(x){}
+    return {ok:true,attempt:at}},
   attemptById(id){const u=me();const a=allAtt().find(x=>x.id===id);return a&&u&&a.studentId===u.studentId?a:null},
   /* what a student can do for an exam right now: start | resume | view | limit | soon */
   state(examId){
@@ -85,15 +101,18 @@ HS.api={
     const at={id:uid('ATT'),examId:e.id,studentId:u.studentId,leadId:u.leadId,startedAt:n,status:'in_progress',secs:p.secs,qids:p.qids,timer:sectional?'section':'global',
       secIdx:0,secEnds:sectional?[n+p.secs[0].minutes*60000]:[],endsAt:n+e.duration*60000,answers:{},visited:{},marked:{},lastQ:{}};
     const all=allAtt();all.push(at);saveAtt(all);HS.track('exam_started',{exam:e.title});return {ok:true,attempt:at};},
-  paper(at){return at.qids.map(id=>DB().get('questions',id)).filter(Boolean).map(publicQ)},
+  paper(at){return at.qids.map(id=>DB().get('questions',id)).filter(Boolean).map(publicQ).map(q=>{const p=at.perm&&at.perm[q.id];return p?Object.assign({},q,{options:p.map(i=>q.options[i])}):q})},
   saveState(at){const all=allAtt(),i=all.findIndex(x=>x.id===at.id);if(i>=0){all[i]=at;saveAtt(all)}return at},
   advance(at,startAt){const n=startAt??clock.now();at.secIdx++;at.secEnds[at.secIdx]=n+at.secs[at.secIdx].minutes*60000;return this.saveState(at)},
   /* POST /api/attempts/:id/submit  (idempotent) */ submit(at,auto){
     if(at.status==='submitted')return at;
     const e=DB().get('exams',at.examId);
+    if(at.kind==='daily'&&at.perm&&!at.converted){   // answers were given against shuffled options: map back to the original option numbers before scoring
+      at.dispAnswers=JSON.parse(JSON.stringify(at.answers));
+      Object.keys(at.answers).forEach(id=>{const p=at.perm[id],v=at.answers[id];if(p&&isAnswered(v))at.answers[id]=Array.isArray(v)?v.map(i=>p[i]).sort():p[v]});at.converted=true}
     at.status='submitted';at.auto=!!auto;
     at.submittedAt=Math.min(clock.now(),at.timer==='section'?at.secEnds[at.secs.length-1]||clock.now():at.endsAt);
-    at.result=score(at);this.saveState(at);HS.track('exam_submitted',{exam:e?e.title:''});
+    at.result=score(at);this.saveState(at);HS.track(at.kind==='daily'?'daily_quiz_completed':'exam_submitted',{exam:e?e.title:''});try{HS.act&&HS.act(at.kind==='daily'?'daily_quiz_completed':'exam_completed',{examId:at.examId,tool:at.kind==='daily'?'daily-quiz':'mock-test'})}catch(x){}
     try{HS.sheet&&HS.sheet.results(at,at.qids.map(id=>DB().get('questions',id)).filter(Boolean).filter(q=>isAnswered(at.answers[q.id])).map((q,i)=>{const r=at.answers[q.id],j=judge(q,r);
       return {question_no:at.qids.indexOf(q.id)+1,section:DB().secName(q.examId,q.sectionId),type:q.type,response:Array.isArray(r)?r.map(x=>'ABCDEF'[x]).join(','):(q.type==='MCQ'||q.type==='TF')?'ABCDEF'[r]:r,is_correct:j==='correct'?'Yes':'No',marks_awarded:j==='correct'?q.marks:q.neg}}))}catch(x){}
     return at},

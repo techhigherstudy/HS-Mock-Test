@@ -4,7 +4,8 @@
 (function(){
 const A=window.HSA,DB=HS.db,$=(s,r=document)=>r.querySelector(s),$$=(s,r=document)=>[...r.querySelectorAll(s)],esc=HS.esc,S=()=>A.S();
 const X=window.HSX={};
-X.attempts=()=>{try{return JSON.parse(localStorage.getItem('hs_attempts')||'[]')}catch(e){return[]}};
+X.allAttempts=()=>{try{return JSON.parse(localStorage.getItem('hs_attempts')||'[]')}catch(e){return[]}};   // every attempt, incl. Daily Quiz
+X.attempts=()=>X.allAttempts().filter(a=>a.kind!=='daily');   // mock-test attempts only: existing modules keep working exactly as before
 X.users=()=>{try{return JSON.parse(localStorage.getItem('hs_users')||'[]')}catch(e){return[]}};
 X.setAttempts=a=>{try{localStorage.setItem('hs_attempts',JSON.stringify(a))}catch(e){}};
 X.setUsers=a=>{try{localStorage.setItem('hs_users',JSON.stringify(a))}catch(e){}};

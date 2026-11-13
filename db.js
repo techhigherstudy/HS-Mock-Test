@@ -8,6 +8,31 @@ const SAMPLE_PDF='data:application/pdf;base64,JVBERi0xLjEKMSAwIG9iajw8L1R5cGUvQ2
 const now=()=>new Date().toISOString();
 let DB=null;
 
+
+/* ---- Daily Quiz / Flashcards collections (MySQL tables in the Laravel phase: daily_quizzes, daily_quiz_questions, flashcard_decks, flashcards, admin_notices) ---- */
+function seedLearn(D){
+  const n=now(),mk=(id,title,examId,sectionId,subject,topic,description,cards)=>({deck:{id,title,examId,sectionId,subject,topic,description,published:true,visibility:'public',owner:'admin',sample:true,createdAt:n},cards});
+  const sets=[
+   mk(1,'CAT Quantitative Aptitude Formulas',1,3,'Quantitative Ability','Formulae','Core formulas for quick revision (sample deck: edit or replace in Admin > Flashcards).',[
+    ['Sum of the first n natural numbers','n(n + 1) / 2'],['Amount under compound interest','A = P(1 + r/100)^n'],['Profit percentage','(Profit / Cost price) × 100'],
+    ['Average speed for equal distances at speeds a and b','2ab / (a + b)'],['Days taken together if A needs a days and B needs b days','ab / (a + b)'],['Probability of an event','Favourable outcomes / Total outcomes'],
+    ['Number of diagonals in an n-sided polygon','n(n − 3) / 2'],['Sum of n terms of a GP (r ≠ 1)','a(r^n − 1) / (r − 1)']]),
+   mk(2,'CAT VARC Vocabulary',1,1,'VARC','Vocabulary','Frequently used words (sample deck).',[
+    ['Ephemeral','Lasting for a very short time'],['Ubiquitous','Present or found everywhere'],['Equivocal','Open to more than one interpretation; ambiguous'],
+    ['Pragmatic','Dealing with things in a sensible, practical way'],['Laconic','Using very few words'],['Obfuscate','To make something unclear or hard to understand']]),
+   mk(3,'GATE Engineering Mathematics Essentials',3,2,'Engineering Mathematics','Linear Algebra & Calculus','Short reminders (sample deck).',[
+    ['Rank–nullity theorem','rank(A) + nullity(A) = number of columns of A'],['Characteristic equation of A','det(A − λI) = 0'],['Derivative of ln x','1 / x'],
+    ['Integral of e^x','e^x + C'],['P(A ∪ B)','P(A) + P(B) − P(A ∩ B)'],['Sum of the eigenvalues of a matrix','Trace of the matrix'],['Product of the eigenvalues of a matrix','Determinant of the matrix']])];
+  const decks=[],cards=[];sets.forEach(s=>{decks.push(s.deck);s.cards.forEach(c=>cards.push({id:cards.length+1,deckId:s.deck.id,front:c[0],back:c[1],expl:'',img:'',subject:s.deck.subject,topic:s.deck.topic,createdAt:n}))});
+  return {decks,cards,dailyq:[],notices:[]};
+}
+const LEARN_MENU=[{key:'daily',label:'Daily Quiz Challenge',href:'daily.html'},{key:'perf',label:'My Performance',href:'performance.html'},{key:'flash',label:'Flashcard Learning',href:'flashcards.html'}];
+function migrate(d){let ch=false;
+  if(!d.decks){Object.assign(d,seedLearn());ch=true}
+  ['dailyq','notices','cards','decks'].forEach(k=>{if(!d[k]){d[k]=[];ch=true}});
+  LEARN_MENU.forEach(m=>{if(!d.menu.some(x=>x.key===m.key)){d.menu.push({id:d.menu.reduce((a,x)=>Math.max(a,x.id),0)+1,group:'tools',key:m.key,label:m.label,href:m.href,order:d.menu.filter(x=>x.group==='tools').length+1,visible:true});ch=true}});
+  return ch}
+
 function seed(){
   const D=window.HS_DATA||{exam:{sections:[],instructions:[]},questions:[]};
   let id=0;const nid=()=>++id;
@@ -89,13 +114,13 @@ function seed(){
    {id:3,title:'CUET English basics (sample notes)',examId:4,sectionId:0,subject:'English',topic:'Grammar',type:'notes',description:'Sample entry.',fileName:'sample.pdf',fileData:SAMPLE_PDF,url:'',published:true,createdAt:now()}];
   const menu=[{id:1,group:'resources',key:'mocks',label:'Mock Tests',href:'mocks.html',order:1,visible:true},{id:2,group:'resources',key:'papers',label:'Previous Year Papers',href:'papers.html',order:2,visible:true},
    {id:3,group:'resources',key:'materials',label:'Exam Study Material',href:'materials.html',order:3,visible:true},{id:4,group:'tools',key:'predictor',label:'College Predictor',href:'predictor.html',order:1,visible:true}];
-  return {v:1,cats,exams,questions,colleges,papers,materials,menu,predLog:[],next:{}};
+  const L=seedLearn();return {v:1,cats,exams,questions,colleges,papers,materials,menu,predLog:[],next:{},decks:L.decks,cards:L.cards,dailyq:[],notices:[]};
 }
 
 function load(){
   if(DB)return DB;
   try{const s=localStorage.getItem(KEY);if(s)DB=JSON.parse(s)}catch(e){}
-  if(!DB||!DB.exams){DB=seed();persist()}
+  if(!DB||!DB.exams){DB=seed();LEARN_MENU.forEach(m=>DB.menu.push({id:DB.menu.length+1,group:'tools',key:m.key,label:m.label,href:m.href,order:DB.menu.length,visible:true}));persist()}else if(migrate(DB))persist();
   return DB;
 }
 function persist(){try{localStorage.setItem(KEY,JSON.stringify(DB));return true}catch(e){if(window.HS&&HS.toast)HS.toast('Browser storage is full. Remove large files or old data.','warn');return false}}

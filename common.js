@@ -181,3 +181,22 @@ window.addEventListener('online',()=>{try{HS.sheet.flush()}catch(e){}});
 HS.collegeUrl=function(c,examId){const base=c.pageUrl||'https://higher.study/colleges';
   try{const u=new URL(base);u.searchParams.set('utm_source','mock-test');u.searchParams.set('utm_medium','college-predictor');
     try{u.searchParams.set('utm_campaign',(HS.db.examName(examId)||'predictor').toLowerCase().replace(/[^a-z0-9]+/g,'-'))}catch(e){}return u.toString()}catch(e){return base}};
+
+/* ---- Learning-activity events (CRM) ----
+   Stored per student with the ORIGINAL marketing source. Anonymous visitors are recorded only after cookie consent (session id, no personal data)
+   and are linked to the student account at registration, again only if consent was given. No passwords, scores or answers are stored here.
+   Laravel phase: POST /api/events -> learning_activity_events table (indexed by student_id, exam_id, created_at). */
+HS.act=function(type,o){o=o||{};
+  try{const u=HS.api&&HS.api.me?HS.api.me():null;if(!u&&HS.consent.get()!=='granted')return;
+    const a=HS.attr?HS.attr.snapshot():{},f=a.first||{},k='hs_learn_events',ev=JSON.parse(localStorage.getItem(k)||'[]');
+    let exam=o.exam||'';if(!exam&&o.examId&&HS.db)exam=HS.db.examName(o.examId);
+    ev.push({id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),type,at:new Date().toISOString(),sid:HS.sid(),studentId:u?u.studentId:'',leadId:u?u.leadId:'',name:u?u.name:'',email:u?u.email:'',
+      examId:o.examId||0,exam,subject:o.subject||'',topic:o.topic||'',tool:o.tool||'',deckId:o.deckId||0,quizId:o.quizId||0,
+      source:f.source||'',medium:f.medium||'',campaign:f.campaign||'',landing:a.landing||'',ref:a.referrer||''});
+    localStorage.setItem(k,JSON.stringify(ev.slice(-4000)))}catch(e){}
+  try{HS.sheet&&HS.sheet.event(type,{tool:o.tool||''})}catch(e){}};
+HS.act.all=()=>{try{return JSON.parse(localStorage.getItem('hs_learn_events')||'[]')}catch(e){return[]}};
+HS.act.link=function(u){try{if(HS.consent.get()!=='granted')return;const sid=HS.sid(),ev=HS.act.all();let n=0;
+  ev.forEach(e=>{if(!e.studentId&&e.sid===sid){e.studentId=u.studentId;e.leadId=u.leadId;e.name=u.name;e.email=u.email;n++}});if(n)localStorage.setItem('hs_learn_events',JSON.stringify(ev))}catch(e){}};
+/* counselling clicks are tracked separately from submitted enquiries; mark any link with data-counsel="<tool>" */
+document.addEventListener('click',e=>{const a=e.target.closest&&e.target.closest('[data-counsel]');if(a)HS.act('counselling_click',{tool:a.dataset.counsel,exam:a.dataset.exam||''})});

@@ -9,7 +9,7 @@
 <div id="site-header"></div>
 <main class="container" id="dash"></main>
 <div id="site-footer"></div>
-<script src="config.js"></script><script src="common.js"></script><script src="data.js"></script><script src="db.js"></script><script src="api.js"></script><script src="auth.js"></script><script src="tests.js"></script>
+<script src="config.js"></script><script src="common.js"></script><script src="data.js"></script><script src="db.js"></script><script src="api.js"></script><script src="auth.js"></script><script src="tests.js"></script><script src="learn.js"></script>
 <script>
 (function(){
   const {$,esc}=HS,u=HS.api.me();
@@ -21,9 +21,19 @@
     const act=done?`<a class="btn btn-primary" href="result.html?a=${encodeURIComponent(a.id)}">View Result</a>`:(e.allowResume?`<a class="btn btn-primary" href="exam.html?a=${encodeURIComponent(a.id)}">Resume</a>`:`<a class="btn btn-ghost" href="exam.html?a=${encodeURIComponent(a.id)}">Finish &amp; submit</a>`);
     const st=HS.api.state(a.examId),again=done&&st.kind==='start'?`<button class="btn btn-ghost" data-again="${a.examId}">Attempt again</button>`:'';
     return `<tr data-ex="${a.examId}"><td><b>${esc(e.title)}</b></td><td>${new Date(a.startedAt).toLocaleDateString()}</td><td>${done?`${r.marks}/${r.max}`:'—'}</td><td>${done?r.percentage+'%':'—'}</td><td>${stat}</td><td class="act">${act}${again}</td></tr>`};
+  const dqL=HS.dq.latest(),stk=HS.dq.streak(),dAtt=HS.api.dailyAttempts().filter(x=>x.status==='submitted'&&!x.retake).sort((x,y)=>y.submittedAt-x.submittedAt),pa=HS.perf.mine(),fcs=HS.fc.stats(u.studentId);
+  const todayQ=dqL.filter(q=>q.date===HS.dq.today()),doneQ=q=>HS.dq.mine(q.id).some(x=>x.status==='submitted');
+  const weak=pa.subjects.find(s=>s.label!=='Not enough data'),ach=HS.dq.achievements().filter(x=>x.earned).slice(-2);
+  const learnCards=`<section class="learn-cards">
+    <article class="card lcard"><h3>Daily Quiz Challenge</h3><div class="big">${dqL.length?(dqL.every(doneQ)?'Done for today':`${dqL.filter(q=>!doneQ(q)).length} ready`):'Not published yet'}</div>
+      <ul><li>Today's quiz: ${todayQ.length?'available':dqL.length?'latest quiz available':'comes automatically'}</li><li>Current streak: <b>${stk.current}</b> day${stk.current===1?'':'s'}</li><li>Last quiz score: ${dAtt[0]?`<b>${dAtt[0].result.marks}/${dAtt[0].result.max}</b> (${dAtt[0].result.percentage}%)`:'no quiz taken yet'}</li></ul><div class="row"><a class="btn btn-primary" href="daily.html">Open Daily Quiz</a></div></article>
+    <article class="card lcard p"><h3>My Performance</h3><div class="big">${pa.n?pa.avg+'%':'No data yet'}</div>
+      <ul><li>Overall performance: ${pa.n?`${pa.avg}% average over ${pa.n} attempt${pa.n>1?'s':''}`:'complete a test or quiz to begin'}</li><li>Weakest subject: ${weak?`<b>${esc(weak.name)}</b> (${weak.accuracy}%)`:'not enough data yet'}</li></ul><div class="row"><a class="btn btn-primary" href="performance.html">View my analysis</a></div></article>
+    <article class="card lcard f"><h3>Flashcard Learning</h3><div class="big">${fcs.pending} to revise</div>
+      <ul><li>Pending revisions: <b>${fcs.pending}</b></li><li>Cards reviewed so far: ${fcs.reviews}</li><li>Recent achievements: ${ach.length?ach.map(x=>esc(x.label)).join(', '):'none yet'}</li></ul><div class="row"><a class="btn btn-primary" href="flashcards.html">Open Flashcards</a></div></article></section>`;
   $('#dash').innerHTML=`
    <section class="dash-hero"><h1>Hi, ${esc(u.name.split(' ')[0])}</h1><p>Your attempts, results and saved progress — all in one place.</p></section>
-   <section class="dash-kpis">${[['Total exams attempted',sm.attempted],['Exams completed',sm.completed],['Exams in progress',sm.inProgress],['Exams passed',sm.passed],['Exams failed',sm.failed],['Total marks obtained',sm.marks],['Average percentage',sm.avg+'%'],['Best performance',sm.best?sm.best.pct+'%':'—',sm.best?sm.best.exam:'']].map(k=>`<div class="card kpi"><b>${k[1]}</b><span>${k[0]}</span>${k[2]?`<small>${esc(k[2])}</small>`:''}</div>`).join('')}</section>
+   ${learnCards}<section class="dash-kpis">${[['Total exams attempted',sm.attempted],['Exams completed',sm.completed],['Exams in progress',sm.inProgress],['Exams passed',sm.passed],['Exams failed',sm.failed],['Total marks obtained',sm.marks],['Average percentage',sm.avg+'%'],['Best performance',sm.best?sm.best.pct+'%':'—',sm.best?sm.best.exam:'']].map(k=>`<div class="card kpi"><b>${k[1]}</b><span>${k[0]}</span>${k[2]?`<small>${esc(k[2])}</small>`:''}</div>`).join('')}</section>
    <div class="dash-sec"><h2>Examination history</h2><div style="display:flex;gap:8px;flex-wrap:wrap"><select class="fi" id="f-ex"><option value="">All examinations</option></select><select class="fi" id="f-st"><option value="">All statuses</option><option value="submitted">Completed</option><option value="in_progress">In progress</option></select></div></div>
    <div id="hist"></div>
    <div class="dash-sec"><h2>Continue your preparation</h2></div>

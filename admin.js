@@ -8,7 +8,7 @@ const MODS=[['dashboard','Dashboard','▦','Overview'],
  ['questions','Question Bank','?','Questions'],['import','Bulk Question Import','⇪','Questions'],
  ['students','Student Management','☺','Students & results'],['attempts','Examination Attempts','▶','Students & results'],['results','Examination Results','✔','Students & results'],
  ['leads','Lead Management','☰','Leads & marketing'],['activity','Lead Activity','◷','Leads & marketing'],['marketing','Marketing Source & Campaigns','◎','Leads & marketing'],['counselling','Counselling & Enquiries','✆','Leads & marketing'],
- ['predictor','College Predictor','⌖','Colleges'],['colleges','College Management','⌂','Colleges'],
+ ['dailyquiz','Daily Quiz','✦','Learning'],['flashcards','Flashcards','▭','Learning'],['perf','Performance Analytics','◔','Learning'],['engagement','Engagement Analytics','☍','Learning'],['predictor','College Predictor','⌖','Colleges'],['colleges','College Management','⌂','Colleges'],
  ['papers','Previous Year Papers','▤','Library'],['materials','Study Material','✐','Library'],['menu','Free Resources Menu','≡','Library'],
  ['cms','Website Content','▥','Site & system'],['admins','Admin Users','♟','Site & system'],['roles','Roles & Permissions','⚿','Site & system'],['reports','Reports & Exports','⇩','Site & system'],['settings','System Settings','⚙','Site & system'],['sheets','Google Sheets','⇄','Site & system'],['database','Database','⛁','Site & system'],['audit','Activity Logs','✓','Site & system']];
 const ACTS=['view','add','edit','delete','publish','export'];
@@ -19,13 +19,13 @@ const only=(o)=>Object.assign(Object.fromEntries(MODS.map(m=>[m[0],[]])),o);
 const ROLES0={
  'Super Admin':allP(),
  'Administrator':only(Object.assign(allP(),{admins:['view'],roles:['view'],database:['view'],settings:['view']})),
- 'Content Manager':only({dashboard:['view'],cms:[...ACTS],menu:[...ACTS],papers:[...ACTS],materials:[...ACTS]}),
- 'Examination Manager':only({dashboard:['view'],exams:[...ACTS],categories:[...ACTS],sections:[...ACTS],mocks:[...ACTS],questions:[...ACTS],import:[...ACTS],papers:[...ACTS],materials:[...ACTS]}),
+ 'Content Manager':only({dashboard:['view'],cms:[...ACTS],menu:[...ACTS],papers:[...ACTS],materials:[...ACTS],flashcards:[...ACTS]}),
+ 'Examination Manager':only({dashboard:['view'],exams:[...ACTS],categories:[...ACTS],sections:[...ACTS],mocks:[...ACTS],questions:[...ACTS],import:[...ACTS],papers:[...ACTS],materials:[...ACTS],dailyquiz:[...ACTS],flashcards:[...ACTS]}),
  'Question Bank Manager':only({questions:[...ACTS],import:[...ACTS]}),
  'Study Material Manager':only({dashboard:['view'],papers:[...ACTS],materials:[...ACTS]}),
- 'Lead Manager':only({dashboard:['view'],leads:['view','edit','export'],activity:['view'],students:['view','edit'],marketing:['view','export'],counselling:['view','edit','add']}),
+ 'Lead Manager':only({dashboard:['view'],leads:['view','edit','export'],activity:['view'],students:['view','edit'],marketing:['view','export'],counselling:['view','edit','add'],engagement:['view','export']}),
  'Counselling Manager':only({dashboard:['view'],counselling:['view','add','edit','export'],leads:['view']}),
- 'Reports Manager':only({dashboard:['view'],leads:['view','export'],students:['view','export'],attempts:['view','export'],results:['view','export'],marketing:['view','export'],reports:['view','export'],audit:['view']})};
+ 'Reports Manager':only({dashboard:['view'],perf:['view','export'],engagement:['view','export'],leads:['view','export'],students:['view','export'],attempts:['view','export'],results:['view','export'],marketing:['view','export'],reports:['view','export'],audit:['view']})};
 const ADM0=HS.ADMINS0;
 const COUNS=['Anita Sharma','Vikram Rao','Neha Gupta','Imran Khan'], MGRS=['Suresh Iyer','Meera Nair'];
 
@@ -69,7 +69,7 @@ const toast=(m,k)=>HS.toast(m,k);
 /* ---------- leads data (seed + students registered in this browser) ---------- */
 const SRCNAME=(src,med)=>{src=String(src||'direct').toLowerCase();med=String(med||'').toLowerCase();return src==='google'&&/cpc|ppc|paid/.test(med)?'Google Ads':src==='google'?'Organic Search':src==='direct'?'Direct':src==='facebook'||src==='fb'?'Facebook':src==='instagram'?'Instagram':src==='whatsapp'?'WhatsApp':src.charAt(0).toUpperCase()+src.slice(1)};
 function realLeads(){
-  let us=[],at=[];try{us=JSON.parse(localStorage.getItem('hs_users')||'[]')}catch(e){}try{at=JSON.parse(localStorage.getItem('hs_attempts')||'[]')}catch(e){}
+  let us=[],at=[];try{us=JSON.parse(localStorage.getItem('hs_users')||'[]')}catch(e){}try{at=JSON.parse(localStorage.getItem('hs_attempts')||'[]').filter(a=>a.kind!=='daily')}catch(e){}
   return us.filter(u=>u.email!=='demo@higher.study').map(u=>{
     const A=u.attr||{},L=A.last||{},Fi=A.first||{},mine=at.filter(a=>a.studentId===u.studentId),done=mine.filter(a=>a.status==='submitted'),best=done.slice().sort((a,b)=>b.result.percentage-a.result.percentage)[0];
     const st=done.length?'Examination Submitted':mine.length?'Examination Started':'Registration Completed',exId=(mine[0]&&mine[0].examId)||A.examId||u.examId||0;

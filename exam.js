@@ -6,7 +6,7 @@ if(!u){location.replace('index.html');return}
 const at0=HS.api.attemptById(new URLSearchParams(location.search).get('a'));
 if(!at0){location.replace('dashboard.html');return}
 if(at0.status==='submitted'){location.replace('result.html?a='+encodeURIComponent(at0.id));return}
-const at=at0,E=HS.db.get('exams',at.examId)||{title:'Test',allowResume:false,category:''};
+const at=at0,E=at.kind==='daily'?{title:at.title,allowResume:true,categoryId:(HS.db.get('exams',at.examId)||{}).categoryId}:(HS.db.get('exams',at.examId)||{title:'Test',allowResume:false,category:''});
 const paper=HS.api.paper(at),secs=at.secs.length?at.secs:[],last=Math.max(secs.length-1,0),sectional=at.timer==='section';
 const isCat=HS.db.catName(E.categoryId)==='CAT',fmtN=n=>(Math.round(n*100)/100).toString();
 document.title=E.title+' — higher.study';
